@@ -10,7 +10,7 @@ This is a basic implementation of Redis with some basic functionalities like -
 To run the code in your system you must have python>3.x. [Download and install here](https://www.python.org/downloads/)
 
 ## Repo Tree
-[](./img/folderTree.png)
+![repo tree](img/folderTree.png)
 
 ## Clone the current repo <br>
 `https://github.com/may55/Redis-Implemention.git`
