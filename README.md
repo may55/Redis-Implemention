@@ -9,10 +9,13 @@ This is a basic implementation of Redis with some basic functionalities like -
 
 To run the code in your system you must have python>3.x. [Download and install here](https://www.python.org/downloads/)
 
+## Repo Tree
+[](./img/folderTree.png)
+
 ## Clone the current repo <br>
 `https://github.com/may55/Redis-Implemention.git`
 
-## rRun redis<br>
+## Run redis<br>
 `python3 main.py`
 
 ## Executable Commands
@@ -23,4 +26,12 @@ EXPIRE <key> <time-in-sec>
 ZADD <set-name> <score1(float)> <element1(string)> <score2> <element2> ...
 ZRANK <set-name> <element(string)>
 ZRANGE <set-name> <start(int)> <end(int)>
+```
+### Example Commands
+```
+SET key "val"
+GET key
+ZADD myset 1 "val" 2 "ele"
+ZRANK myset "val"
+ZRANGE myset 0 -1
 ```
