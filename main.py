@@ -99,7 +99,7 @@ while(True):
 				continue
 
 			for i in range(0,len(cmd_spl),2):
-				element = cmd_spl[i+1][1:-2]
+				element = cmd_spl[i+1][1:-1]
 				score = float(cmd_spl[i])
 				if key in redis:
 					if(redis[key]['type']==0 and redis[key]['time']>=datetime.datetime.now()):
