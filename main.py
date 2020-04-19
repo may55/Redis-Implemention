@@ -36,7 +36,7 @@ except:
 
 f.close()
 
-
+last_time = datetime.datetime.now()
 
 
 while(True):
@@ -82,14 +82,65 @@ while(True):
 
 		# ZADD Command
 		elif(cmd=="ZADD"):
-			element = values[0]
-			score = float(user_input.split()[2])
-			if key in redis:
-				if(redis[key]['type']==0 and redis[key]['time']>=datetime.datetime.now()):
-					print("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+			cmd_spl = user_input.split()[2:]
+			count = 0
+			valid_cmd = (len(cmd_spl)%2)==0
+			if(not valid_cmd):
+				print("(error) ERR syntax error")
+				continue
+			for i in range(0,len(cmd_spl),2):
+				try:
+					score = float(cmd_spl[i])
+				except:
+					valid_cmd = False
+					break
+			if(not valid_cmd):
+				print("(error) ERR syntax error")
+				continue
 
-				#if the set was expired
-				elif(redis[key]['time']<datetime.datetime.now()):
+			for i in range(0,len(cmd_spl),2):
+				element = cmd_spl[i+1][1:-2]
+				score = float(cmd_spl[i])
+				if key in redis:
+					if(redis[key]['type']==0 and redis[key]['time']>=datetime.datetime.now()):
+						print("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
+
+					#if the set was expired
+					elif(redis[key]['time']<datetime.datetime.now()):
+						redis[key]['type'] = 1
+						redis[key]['time'] = datetime.datetime.max
+						redis[key]['value'] = None
+						redis[key]['set'] = dict()
+						redis[key]['root'] = None
+						redis[key]['tree'] = Tree()
+						redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
+																				score,element,None,None)
+						if(redis[key]['set'] is None):
+							redis[key]['set'] = dict()
+						redis[key]['set'][element] = score
+						count += 1
+					else:
+						if(redis[key]['set']!=None and element in redis[key]['set']):
+							#delete last copy
+							redis[key]['root'] = redis[key]['tree'].delete(redis[key]['root'],
+																			redis[key]['set'][element],
+																			element, None, None)
+							#insert new copy
+							redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
+																			score,element,None,None)
+							redis[key]['set'][element] = score
+							# print(0)
+
+						else:
+							redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
+																			score,element,None,None)
+							if(redis[key]['set'] is None):
+								redis[key]['set'] = dict()
+							redis[key]['set'][element] = score
+							count += 1
+						
+				else:
+					redis[key] = dict()
 					redis[key]['type'] = 1
 					redis[key]['time'] = datetime.datetime.max
 					redis[key]['value'] = None
@@ -98,42 +149,9 @@ while(True):
 					redis[key]['tree'] = Tree()
 					redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
 																			score,element,None,None)
-					if(redis[key]['set'] is None):
-						redis[key]['set'] = dict()
 					redis[key]['set'][element] = score
-					print(1)
-				else:
-					if(redis[key]['set']!=None and element in redis[key]['set']):
-						#delete last copy
-						redis[key]['root'] = redis[key]['tree'].delete(redis[key]['root'],
-																		redis[key]['set'][element],
-																		element, None, None)
-						#insert new copy
-						redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
-																		score,element,None,None)
-						redis[key]['set'][element] = score
-						print(0)
-
-					else:
-						redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
-																		score,element,None,None)
-						if(redis[key]['set'] is None):
-							redis[key]['set'] = dict()
-						redis[key]['set'][element] = score
-						print(1)
-					
-			else:
-				redis[key] = dict()
-				redis[key]['type'] = 1
-				redis[key]['time'] = datetime.datetime.max
-				redis[key]['value'] = None
-				redis[key]['set'] = dict()
-				redis[key]['root'] = None
-				redis[key]['tree'] = Tree()
-				redis[key]['root'] = redis[key]['tree'].insert(redis[key]['root'],
-																		score,element,None,None)
-				redis[key]['set'][element] = score
-				print(1)
+					count += 1
+			print(count)
 
 		# ZRANK Command
 		elif(cmd=="ZRANK"):
@@ -158,6 +176,9 @@ while(True):
 		elif(cmd=="ZRANGE"):
 			start = int(user_input.split()[2])
 			end = int(user_input.split()[3])
+			with_score = False
+			if user_input.split()[-1]== "WITHSCORES":
+				with_score = True
 			if(key in redis):
 				if(redis[key]['type']==0):
 					print("(error) WRONGTYPE Operation against a key holding the wrong kind of value")
@@ -177,6 +198,8 @@ while(True):
 						print("(empty list or set)")
 					for element in elements:
 						print(element.element)
+						if(with_score):
+							print(element.score)
 			else:
 				print("(empty list or set)")
 
@@ -184,6 +207,14 @@ while(True):
 			break
 		else:
 			printSupportCmd()
+
+		delta = datetime.timedelta(seconds=60)	
+		if(last_time+delta>datetime.datetime.now()):
+			f = open('file.pkl','wb')
+			pickle.dump(redis,f)
+			f.close()
+			last_time = datetime.datetime.now()
+
 	except :
 		print("Unexpected error:", sys.exc_info())
 		printSupportCmd()
