@@ -35,3 +35,7 @@ ZADD myset 1 "val" 2 "ele"
 ZRANK myset "val"
 ZRANGE myset 0 -1
 ```
+
+
+## Demo Run
+![Demo Run](img/demo.png)
